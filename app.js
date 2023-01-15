@@ -76,10 +76,10 @@ const runComparison = () => {
 
 
     leftSideStats.forEach((leftStat, index) => {
-        let rightStat = rightSideStats[index];
+        const rightStat = rightSideStats[index];
 
-        let leftSideValue = leftStat.dataset.value;
-        let rightSideValue = rightStat.dataset.value;
+        const leftSideValue = parseInt(leftStat.dataset.value);
+        const rightSideValue = parseInt(rightStat.dataset.value);
 
         if (rightSideValue > leftSideValue) {
             console.log("RIGHT SIDE GREATER\nrightSideValue:", rightSideValue, "leftSideValue:", leftSideValue);

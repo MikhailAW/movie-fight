@@ -1,50 +1,97 @@
-const fetchData = async (searchTerm) => {
+const autoCompleteConfig = {
+    renderOption(movie) {
+        const imgSrc = movie.Poster === 'N/A' ? '' : movie.Poster;
+        return `
+        <img src= "${imgSrc}"/>
+       ${movie.Title} (${movie.Year})
+        `;
+    },
+    onOptionSelect(movie) {
+        onMovieSelect(movie);
+    },
+    inputValue(movie) {
+        return movie.Title;
+    },
+    async fetchData(searchTerm) {
+        const response = await axios.get('http://www.omdbapi.com/', {
+            params: {
+                apikey: '916718d2',
+                s: searchTerm
+            }
+        });
+        if (response.data.Error) {
+            return [];
+        }
+
+        return response.data.Search;
+    }
+};
+
+createAutoComplete({
+    ...autoCompleteConfig,
+    root: document.querySelector('#left-autocomplete'),
+    onOptionSelect(movie) {
+        document.querySelector('.tutorial').classList.add('is-hidden');
+        onMovieSelect(movie, document.querySelector('#left-summary'));
+    }
+});
+
+
+createAutoComplete({
+    ...autoCompleteConfig,
+    root: document.querySelector('#right-autocomplete'),
+    onOptionSelect(movie) {
+        document.querySelector('.tutorial').classList.add('is-hidden');
+        onMovieSelect(movie, document.querySelector('#right-summary'));
+    }
+});
+
+//Get more detailed information when user clicks on a movie from the dropdown list
+const onMovieSelect = async (movie, summaryElement) => {
     const response = await axios.get('http://www.omdbapi.com/', {
         params: {
             apikey: '916718d2',
-            s: searchTerm
+            i: movie.imdbID
         }
     });
-    if (response.data.Error) {
-        return [];
-    }
-
-    return response.data.Search;
+    summaryElement.innerHTML = movieTemplate(response.data);
 };
 
-const root = document.querySelector('.autocomplete');
-root.innerHTML = `
-    <label><b>Search For a Movie</b></label>
-    <input class="input" />
-    <div class="dropdown">
-        <div class="dropdown-menu">
-            <div class="dropdown-content results"></div>
+const movieTemplate = movieDetail => {
+    return `
+    <article class="media">
+        <figure class="media-left">
+            <p class="image">
+                <img src="${movieDetail.Poster}" />
+            </p>
+        </figure>
+        <div class="media-content">
+            <div class="content">
+                <h1>${movieDetail.Title}</h1>
+                <h4>${movieDetail.Genre}</h4>
+                <p>${movieDetail.Plot}</p>
+            </div>
         </div>
-    </div>
-`;
-
-const input = document.querySelector('input');
-const dropdown = document.querySelector('.dropdown');
-const resultsWrapper = document.querySelector('.results');
-
-
-const onInput = async event => {
-    const movies = await fetchData(event.target.value);
-
-    dropdown.classList.add('is-active');
-
-    for (let movie of movies) {
-        const option = document.createElement('a');
-
-        option.classList.add('dropdown-item');
-        option.innerHTML = `
-        <img src= "${movie.Poster}"/>
-       ${movie.Title}
-        `;
-
-        resultsWrapper.appendChild(option);
-    }
+    </article>
+    <article class="notification is-success">
+      <p class="title">${movieDetail.Awards}</p>
+      <p class="subtitle">Awards</p>
+    </article>
+    <article class="notification is-success">
+      <p class="title">${movieDetail.BoxOffice}</p>
+      <p class="subtitle">Box Office</p>
+    </article>
+    <article class="notification is-success">
+      <p class="title">${movieDetail.Metascore}</p>
+      <p class="subtitle">Metascore</p>
+    </article>
+    <article class="notification is-success">
+      <p class="title">${movieDetail.imdbRating}</p>
+      <p class="subtitle">IMDB Rating</p>
+    </article>
+    <article class="notification is-success">
+      <p class="title">${movieDetail.imdbVotes}</p>
+      <p class="subtitle">IMDB Votes</p>
+    </article>
+    `;
 };
-
-input.addEventListener('input', debounce(onInput, 500));
-
